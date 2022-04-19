@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32228.430
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "InformationExperimentTheme2", "InformationExperimentTheme2\InformationExperimentTheme2.vcxproj", "{C8941D80-D1F2-40BD-B2AA-BCE10154674A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C8941D80-D1F2-40BD-B2AA-BCE10154674A}.Debug|x64.ActiveCfg = Debug|x64
+		{C8941D80-D1F2-40BD-B2AA-BCE10154674A}.Debug|x64.Build.0 = Debug|x64
+		{C8941D80-D1F2-40BD-B2AA-BCE10154674A}.Release|x64.ActiveCfg = Release|x64
+		{C8941D80-D1F2-40BD-B2AA-BCE10154674A}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {14CB74DE-9526-412B-B407-F9849105EAFD}
+	EndGlobalSection
+EndGlobal
