@@ -62,6 +62,14 @@ void Graph::Draw(Line l, Color col) {
 	l.draw(4, col);
 }
 
+void Graph::DrawArrow(Line l, Color col) {
+	Position start = this->ConvertPos(Position{ l.begin.x, l.begin.y });
+	Position end = this->ConvertPos(Position{ l.end.x, l.end.y });
+	l.begin = Vec2(start.first, start.second);
+	l.end = Vec2(end.first, end.second);
+	l.drawArrow(4, Vec2(5, 5), col);
+}
+
 void Graph::Draw(Circle c, Color col) {
 	Position converted = this->ConvertPos(Position{ c.x, c.y });
 	c.x = converted.first;

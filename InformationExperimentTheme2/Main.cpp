@@ -10,8 +10,8 @@ constexpr int ROBOT_COUNT = 10; // ロボット数
 constexpr double ROBOT_RADIUS = 1.5; //ロボットの直径は3cm
 
 //グラフパラメータ
-constexpr int CMPIXEL = 25;//1cmを何pixelで描画するか
-constexpr int GRAPH_SIZE = 20;
+constexpr int CMPIXEL = 15;//1cmを何pixelで描画するか
+constexpr int GRAPH_SIZE = 40;
 
 //各相互作用ルールの検知範囲
 constexpr double SEPARATION_RADIUS = 3;
@@ -20,8 +20,8 @@ constexpr double COHESION_RADIUS = 3.5;
 
 //各相互作用ルールの重み
 constexpr double PREVIOUS_MOVE_VEC_WEIGHT = 0.5;
-constexpr double SEPARATION_WEIGHT = 0.3;
-constexpr double ALIGNMENT_WEIGHT = 0.1;
+constexpr double SEPARATION_WEIGHT = 0.1;
+constexpr double ALIGNMENT_WEIGHT = 0.3;
 constexpr double COHESION_WEIGHT = 0.1;
 
 //エイリアス
@@ -224,8 +224,14 @@ void Main(){
 			graph.Draw(Circle(robotx, roboty, ROBOT_RADIUS), ColorF(1, 0, 0, 0.5));
 			graph.Draw(Line(robotx, roboty, robotx + robot.move.first, roboty + robot.move.second), Palette::Green);
 			Position robotMouseOverCirclePos = graph.ConvertPos(robot.pos);
-			if (Circle(robotMouseOverCirclePos.first, robotMouseOverCirclePos.second, 50).mouseOver()) {
-				font(robot.identifier).draw(Cursor::Pos().x + 25, Cursor::Pos().y - 20, Palette::Black);
+			//情報の表示
+			if (Circle(robotMouseOverCirclePos.first, robotMouseOverCirclePos.second, 20).mouseOver()) {
+				font(robot.identifier,U"\n",
+					U"Movement X: ", robot.move.first, U"\n",
+					U"Movement Y: ", robot.move.second,U"\n",
+					U"Position X: ", robot.pos.first, U"\n"
+					U"Position Y: ", robot.pos.second
+					).draw(Cursor::Pos().x + 30, Cursor::Pos().y - 20, Palette::Darkblue);
 			}
 
 			if (eyesightVisualization) {

@@ -28,6 +28,7 @@ public:
 	void Put(Circle);
 	void Draw(Line, Color col = Palette::Black);
 	void Draw(Circle, Color col = Palette::Black);
+	void DrawArrow(Line, Color col = Palette::Black);
 	void Show();
 };
 
