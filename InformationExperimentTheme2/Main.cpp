@@ -10,8 +10,8 @@ constexpr int ROBOT_COUNT = 10; // ロボット数
 constexpr double ROBOT_RADIUS = 1.5; //ロボットの直径は3cm
 
 //グラフパラメータ
-constexpr int CMPIXEL = 15;//1cmを何pixelで描画するか
-constexpr int GRAPH_SIZE = 40;
+constexpr int CMPIXEL = 5;//1cmを何pixelで描画するか
+constexpr int GRAPH_SIZE = 500;
 
 //各相互作用ルールの検知範囲
 constexpr double SEPARATION_RADIUS = 3;
@@ -133,16 +133,32 @@ Line VecToLine(const MovementVec& vec) {
 	return Line(vec.first, vec.second, std::atan(vec.first / vec.second), 1);
 }
 
-//分離のこと
+void GetNearbyRobots(std::vector<Robot>& arr, const Robot& robot, const std::vector<Robot>& robots, int radius) {
+	for (const auto& r : robots) {
+		if (r.pos == robot.pos) continue;
+		if (CalcRobotDistance(robot, r) <= radius) {
+			arr.push_back(r);
+		}
+	}
+}
+
+//分離のこと あるロボットとその他すべてのロボットを比較してベクトルを計算
 MovementVec Separation(const Robot& robot, const std::vector<Robot>& robots) {
 	MovementVec vecSum = std::make_pair<double, double>(0, 0);//加算用のベクトル
+	std::vector<Robot> nearbyRobots;
 
-	for (const auto& r: robots) {
+	GetNearbyRobots(nearbyRobots, robot, robots, SEPARATION_RADIUS);
+	//for (const auto& r: robots) {
+	//	if (r.pos == robot.pos) continue;
+	//	if (CalcRobotDistance(robot, r) <= SEPARATION_RADIUS) {
+	//		vecSum.first = r.pos.first - robot.pos.first;
+	//		vecSum.second += r.pos.second - robot.pos.second;
+	//	}
+	//}
+	for (auto& r : nearbyRobots) {
 		if (r.pos == robot.pos) continue;
-		if (CalcRobotDistance(robot, r) <= SEPARATION_RADIUS) {
-			vecSum.first = r.pos.first - robot.pos.first;
-			vecSum.second += r.pos.second - robot.pos.second;
-		}
+		vecSum.first = r.pos.first - robot.pos.first;
+		vecSum.second += r.pos.second - robot.pos.second;
 	}
 
 	vecSum = MakeUnitVector(vecSum);
@@ -154,6 +170,9 @@ MovementVec Separation(const Robot& robot, const std::vector<Robot>& robots) {
 //整列のこと
 MovementVec Alignment(const Robot& robot, const std::vector<Robot>& robots) {
 	MovementVec vecSum = std::make_pair<double, double>(0, 0);
+	//std::vector<Robot> nearbyRobots;
+
+	//GetNearbyRobots(nearbyRobots, robot, robots, ALIGNMENT_RADIUS);
 
 	for (const auto& r : robots) {
 		if (r.pos == robot.pos) continue;
@@ -162,6 +181,11 @@ MovementVec Alignment(const Robot& robot, const std::vector<Robot>& robots) {
 			vecSum.second += r.move.second;
 		}
 	}
+	//for (auto& r : nearbyRobots) {
+	//	if (r.pos == robot.pos) continue;
+	//	vecSum.first += r.move.first;
+	//	vecSum.second += r.move.second;
+	//}
 
 	vecSum = MakeUnitVector(vecSum);
 	return vecSum;
@@ -196,6 +220,8 @@ void MoveRobots(std::vector<Robot>& robots) {
 }
 
 void Main(){
+	Window::Resize(Size(1700, 1000));
+
 	//ロボット初期化
 	std::vector<Robot> robots(10, Robot());
 	InitRobotMoveVec(robots);
@@ -204,7 +230,7 @@ void Main(){
 	Font font(20);
 
 	//グラフ構築
-	Graph graph(Position{10, 500}, CMPIXEL, GRAPH_SIZE);
+	Graph graph(Position{10, 800}, CMPIXEL, GRAPH_SIZE);
 
 	//初回か?
 	bool isFirstTime = true;
@@ -221,10 +247,14 @@ void Main(){
 		for (const auto& robot : robots) {
 			double robotx = robot.pos.first;
 			double roboty = robot.pos.second;
+			//ロボット表示
 			graph.Draw(Circle(robotx, roboty, ROBOT_RADIUS), ColorF(1, 0, 0, 0.5));
+			//移動ベクトル表示
 			graph.Draw(Line(robotx, roboty, robotx + robot.move.first, roboty + robot.move.second), Palette::Green);
-			Position robotMouseOverCirclePos = graph.ConvertPos(robot.pos);
+
+
 			//情報の表示
+			Position robotMouseOverCirclePos = graph.ConvertPos(robot.pos);
 			if (Circle(robotMouseOverCirclePos.first, robotMouseOverCirclePos.second, 20).mouseOver()) {
 				font(robot.identifier,U"\n",
 					U"Movement X: ", robot.move.first, U"\n",
@@ -234,6 +264,7 @@ void Main(){
 					).draw(Cursor::Pos().x + 30, Cursor::Pos().y - 20, Palette::Darkblue);
 			}
 
+			//視野表示判定
 			if (eyesightVisualization) {
 				graph.Draw(Circle(robotx, roboty, 3.5), ColorF(0, 0, 1, 0.2));
 			}
