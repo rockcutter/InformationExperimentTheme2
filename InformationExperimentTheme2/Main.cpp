@@ -133,7 +133,7 @@ Line VecToLine(const MovementVec& vec) {
 	return Line(vec.first, vec.second, std::atan(vec.first / vec.second), 1);
 }
 
-void GetNearbyRobots(std::vector<Robot>& arr, const Robot& robot, const std::vector<Robot>& robots, int radius) {
+void GetNearbyRobots(std::vector<Robot>& arr, const Robot& robot, const std::vector<Robot>& robots, double radius) {
 	for (const auto& r : robots) {
 		if (r.pos == robot.pos) continue;
 		if (CalcRobotDistance(robot, r) <= radius) {
