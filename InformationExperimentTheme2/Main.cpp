@@ -85,6 +85,9 @@ public:
 	MovementVec move;
 	Robot():identifier(0), pos{0, 0}, move{0, 0}
 	{}
+	Robot(char identifier, Position pos, MovementVec move) 
+		: identifier(identifier), pos(pos), move(move)
+	{}
 };
 
 //Initialize
@@ -117,7 +120,8 @@ void InitRobotMoveVec(std::vector<Robot>& robotArray) {
 
 //ロボット同士の距離計算
 double CalcRobotDistance(const Robot& r1, const Robot& r2) {
-	return std::sqrt(std::pow(r1.pos.first - r2.pos.first, 2) + std::pow(r1.pos.second - r2.pos.second, 2));
+	Position distance = r1.pos - r2.pos;
+	return std::sqrt(std::pow(distance.first, 2) + std::pow(distance.second, 2));
 }
 
 //ノルムの計算
@@ -155,13 +159,11 @@ MovementVec Separation(const Robot& robot, const std::vector<Robot>& robots) {
 	GetNearbyRobots(nearbyRobots, robot, robots, SEPARATION_RADIUS);
 	for (auto& r : nearbyRobots) {
 		if (r.pos == robot.pos) continue;
-		vecSum.first += r.pos.first - robot.pos.first;
-		vecSum.second += r.pos.second - robot.pos.second;
+		vecSum = vecSum + r.pos - robot.pos;
 	}
 
 	vecSum = MakeUnitVector(vecSum);
-	vecSum.first *= -1;
-	vecSum.second *= -1;
+	vecSum = vecSum * MovementVec{ -1, -1 };
 	return vecSum;
 }
 
@@ -173,8 +175,7 @@ MovementVec Alignment(const Robot& robot, const std::vector<Robot>& robots) {
 	GetNearbyRobots(nearbyRobots, robot, robots, ALIGNMENT_RADIUS);
 	for (auto& r : nearbyRobots) {
 		if (r.pos == robot.pos) continue;
-		vecSum.first += r.move.first;
-		vecSum.second += r.move.second;
+		vecSum = vecSum + r.move;
 	}
 
 	vecSum = MakeUnitVector(vecSum);
@@ -193,8 +194,7 @@ MovementVec Cohesion(const Robot& robot, const std::vector<Robot>& robots) {
 	}
 
 	for (const auto& r : nearbyRobots) {
-		vecSum.first += r.pos.first;
-		vecSum.second += r.pos.second;
+		vecSum = vecSum + r.pos;
 	}
 
 	//重心の位置ベクトル
@@ -202,9 +202,7 @@ MovementVec Cohesion(const Robot& robot, const std::vector<Robot>& robots) {
 	vecSum.second /= nearbyRobots.size();
 
 	//重心へのベクトルを計算
-	vecSum.first -= robot.pos.first;
-	vecSum.second -= robot.pos.second;
-
+	vecSum = vecSum - robot.pos;
 
 	vecSum = MakeUnitVector(vecSum);
 	return vecSum;
@@ -213,44 +211,45 @@ MovementVec Cohesion(const Robot& robot, const std::vector<Robot>& robots) {
 //ロボットの移動(ロボットを現在位置+移動ベクトルの位置へ移動)
 void MoveRobots(std::vector<Robot>& robots) {
 	for (auto& robot : robots) {
-		robot.pos.first += robot.move.first;
-		robot.pos.second += robot.move.second;
+		robot.pos = robot.pos + robot.move;
 	}
 }
 
 void Main(){
 	Window::Resize(Size(1700, 1000));
+	Scene::SetBackground(Palette::White);
+	Font font(20);
 
 	//ロボット初期化
 	std::vector<Robot> robots(10, Robot());
 	InitRobotMoveVec(robots);
 	InitRobotPos(robots);
 	InitIdentifiler(robots);
-	Font font(20);
 
 	//グラフ構築
 	Graph graph(Position{10, 800}, CMPIXEL, GRAPH_SIZE);
 
-	//初回か?
+	//各種フラグ
 	bool isFirstTime = true;
 	bool autoMode = false;
 	bool eyesightVisualization = false;
 
-	Scene::SetBackground(Palette::White);
+	//メインループ
 	while (System::Update())
 	{
+		//ロボット制御プログラムへ移行する時はここから気にしなくてよい------------------------------
 		//グラフの表示
 		graph.Show();
 
 		//ロボットの表示&移動ベクトルの表示
 		for (const auto& robot : robots) {
+
 			double robotx = robot.pos.first;
 			double roboty = robot.pos.second;
 			//ロボット表示
 			graph.Draw(Circle(robotx, roboty, ROBOT_RADIUS), ColorF(1, 0, 0, 0.5));
 			//移動ベクトル表示
-			graph.Draw(Line(robotx, roboty, robotx + robot.move.first, roboty + robot.move.second), Palette::Green);
-
+			graph.Draw(Line(robotx, roboty, robotx + robot.move.first, roboty + robot.move.second),Palette::Green);
 
 			//情報の表示
 			Position robotMouseOverCirclePos = graph.ConvertPos(robot.pos);
@@ -284,7 +283,12 @@ void Main(){
 		if (!(SimpleGUI::Button(U"next", Vec2(10, 550)) || autoMode)) {
 			continue;
 		}
-		//初めてなら初期移動ベクトルの通りに移動
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		//ロボット制御プログラムへ移行する時はここまで気にしなくてよい---------------------------------------
+
+
+		
+		//①初めてなら初期移動ベクトルの通りに移動
 		if (isFirstTime) {
 			MoveRobots(robots);
 			isFirstTime = false;
@@ -297,32 +301,33 @@ void Main(){
 		for (const auto& robot : robots) {
 			MovementVec moveVec = robot.move;
 			MovementVec tempVec = std::make_pair<double, double>(0, 0);
-			//前回の移動ベクトルに重みを掛けたものを保持しておく
+
+			//②前回の移動ベクトルに重みを掛けたものを保持しておく
 			moveVec.first *= PREVIOUS_MOVE_VEC_WEIGHT;
 			moveVec.second *= PREVIOUS_MOVE_VEC_WEIGHT;
-			//分離操作
+			//③分離操作
 			tempVec= Separation(robot, robots);
 			moveVec.first += SEPARATION_WEIGHT * tempVec.first;
 			moveVec.second += SEPARATION_WEIGHT * tempVec.second;
-			//整列操作
+			//④整列操作
 			tempVec = Alignment(robot, robots);
 			moveVec.first += ALIGNMENT_WEIGHT * tempVec.first;
 			moveVec.second += ALIGNMENT_WEIGHT * tempVec.second;
-			//団結操作
+			//⑤団結操作
 			tempVec = Cohesion(robot, robots);
 			moveVec.first += COHESION_WEIGHT * tempVec.first;
 			moveVec.second += COHESION_WEIGHT * tempVec.second;
 
 
-
 			if (CalcVecNorm(moveVec) > 1) {
 				throw std::logic_error("ベクトルの大きさが1よりデカいぞ(1cm以上進む気だぞ)");
 			}
-
+			
 			Robot tempRobot;
 			tempRobot.identifier = robot.identifier;
 			tempRobot.pos = robot.pos;
 			tempRobot.move = moveVec;
+			//movedRobots.push_back(Robot(robot.identifier, robot.pos, robot.move));
 			movedRobots.push_back(tempRobot);
 
 			double robotx = robot.pos.first;
