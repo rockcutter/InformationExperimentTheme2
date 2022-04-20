@@ -3,6 +3,7 @@
 #include <array>
 #include <stdexcept>
 #include <cmath>
+#include "MyVec.h"
 #include "Graph.h"
 
 //基本パラメータ
@@ -28,28 +29,28 @@ constexpr double ALIGNMENT_WEIGHT = 0.3;
 constexpr double COHESION_WEIGHT = 0.1;
 
 //エイリアス
-using Position = std::pair<double, double>;
-using MovementVec = std::pair<double, double>;
+using Position = MyVec<double>;
+using MovementVec = MyVec<double>;
 
 //デフォルト移動ベクトルの種類
 const MovementVec DEFAULT_VEC_UP{0, 1};
 const MovementVec DEFAULT_VEC_RIGHT{1 / std::sqrt(2), 1 / std::sqrt(2)};
 const MovementVec DEFAULT_VEC_LEFT{-1 / std::sqrt(2), 1 / std::sqrt(2)};
 
-const Position INITIAL_POSITION_DELTA{ 0, 0 }; //初期位置をずらしたいときに使う
+const Position INITIAL_POSITION_DELTA{ 1, 1 }; //初期位置をずらしたいときに使う
 
 //通常のグラフのような座標管理なのでウィンドウにおける座標の管理ではない
 const std::array<Position, ROBOT_COUNT> INITIAL_POS{ // ロボットの初期位置
-	std::make_pair<double, double>(0, 2),
-	std::make_pair<double, double>(2, 6),
-	std::make_pair<double, double>(4, 0),
-	std::make_pair<double, double>(6, 12),
-	std::make_pair<double, double>(8, 8),
-	std::make_pair<double, double>(8, 4),
-	std::make_pair<double, double>(10, 0),
-	std::make_pair<double, double>(12, 10),
-	std::make_pair<double, double>(14, 6),
-	std::make_pair<double, double>(16, 0)
+	std::make_pair<double, double>(0, 2) + INITIAL_POSITION_DELTA,
+	std::make_pair<double, double>(2, 6) + INITIAL_POSITION_DELTA,
+	std::make_pair<double, double>(4, 0) + INITIAL_POSITION_DELTA,
+	std::make_pair<double, double>(6, 12) + INITIAL_POSITION_DELTA,
+	std::make_pair<double, double>(8, 8) + INITIAL_POSITION_DELTA,
+	std::make_pair<double, double>(8, 4) + INITIAL_POSITION_DELTA,
+	std::make_pair<double, double>(10, 0) + INITIAL_POSITION_DELTA,
+	std::make_pair<double, double>(12, 10) + INITIAL_POSITION_DELTA,
+	std::make_pair<double, double>(14, 6) + INITIAL_POSITION_DELTA,
+	std::make_pair<double, double>(16, 0) + INITIAL_POSITION_DELTA,
 };
 const std::array<MovementVec, ROBOT_COUNT> INITIAL_MOVE_VEC{
 	DEFAULT_VEC_RIGHT, 
@@ -116,7 +117,6 @@ void InitRobotMoveVec(std::vector<Robot>& robotArray) {
 
 //ロボット同士の距離計算
 double CalcRobotDistance(const Robot& r1, const Robot& r2) {
-	if (std::sqrt(std::pow(r1.pos.first - r2.pos.first, 2) + std::pow(r1.pos.second - r2.pos.second, 2)) < 3) throw std::logic_error("ロボット衝突");
 	return std::sqrt(std::pow(r1.pos.first - r2.pos.first, 2) + std::pow(r1.pos.second - r2.pos.second, 2));
 }
 
@@ -137,6 +137,7 @@ Line VecToLine(const MovementVec& vec) {
 	return Line(vec.first, vec.second, std::atan(vec.first / vec.second), 1);
 }
 
+//radiusを半径とする円内のRobotオブジェクトをarrに格納
 void GetNearbyRobots(std::vector<Robot>& arr, const Robot& robot, const std::vector<Robot>& robots, double radius) {
 	for (const auto& r : robots) {
 		if (r.pos == robot.pos) continue;
