@@ -10,13 +10,16 @@ constexpr int ROBOT_COUNT = 10; // ロボット数
 constexpr double ROBOT_RADIUS = 1.5; //ロボットの直径は3cm
 
 //グラフパラメータ
-constexpr int CMPIXEL = 5;//1cmを何pixelで描画するか
-constexpr int GRAPH_SIZE = 500;
+constexpr int CMPIXEL = 15;//1cmを何pixelで描画するか
+constexpr int GRAPH_SIZE = 100;
+
+//ロボットの検知範囲
+constexpr double DETECTION_RADIUS = 7;
 
 //各相互作用ルールの検知範囲
-constexpr double SEPARATION_RADIUS = 3;
-constexpr double ALIGNMENT_RADIUS = 3.5;
-constexpr double COHESION_RADIUS = 3.5;
+constexpr double SEPARATION_RADIUS = 6;
+constexpr double ALIGNMENT_RADIUS = 7;
+constexpr double COHESION_RADIUS = 7;
 
 //各相互作用ルールの重み
 constexpr double PREVIOUS_MOVE_VEC_WEIGHT = 0.5;
@@ -113,6 +116,7 @@ void InitRobotMoveVec(std::vector<Robot>& robotArray) {
 
 //ロボット同士の距離計算
 double CalcRobotDistance(const Robot& r1, const Robot& r2) {
+	if (std::sqrt(std::pow(r1.pos.first - r2.pos.first, 2) + std::pow(r1.pos.second - r2.pos.second, 2)) < 3) throw std::logic_error("ロボット衝突");
 	return std::sqrt(std::pow(r1.pos.first - r2.pos.first, 2) + std::pow(r1.pos.second - r2.pos.second, 2));
 }
 
@@ -148,16 +152,9 @@ MovementVec Separation(const Robot& robot, const std::vector<Robot>& robots) {
 	std::vector<Robot> nearbyRobots;
 
 	GetNearbyRobots(nearbyRobots, robot, robots, SEPARATION_RADIUS);
-	//for (const auto& r: robots) {
-	//	if (r.pos == robot.pos) continue;
-	//	if (CalcRobotDistance(robot, r) <= SEPARATION_RADIUS) {
-	//		vecSum.first = r.pos.first - robot.pos.first;
-	//		vecSum.second += r.pos.second - robot.pos.second;
-	//	}
-	//}
 	for (auto& r : nearbyRobots) {
 		if (r.pos == robot.pos) continue;
-		vecSum.first = r.pos.first - robot.pos.first;
+		vecSum.first += r.pos.first - robot.pos.first;
 		vecSum.second += r.pos.second - robot.pos.second;
 	}
 
@@ -170,22 +167,14 @@ MovementVec Separation(const Robot& robot, const std::vector<Robot>& robots) {
 //整列のこと
 MovementVec Alignment(const Robot& robot, const std::vector<Robot>& robots) {
 	MovementVec vecSum = std::make_pair<double, double>(0, 0);
-	//std::vector<Robot> nearbyRobots;
+	std::vector<Robot> nearbyRobots;
 
-	//GetNearbyRobots(nearbyRobots, robot, robots, ALIGNMENT_RADIUS);
-
-	for (const auto& r : robots) {
+	GetNearbyRobots(nearbyRobots, robot, robots, ALIGNMENT_RADIUS);
+	for (auto& r : nearbyRobots) {
 		if (r.pos == robot.pos) continue;
-		if (CalcRobotDistance(robot, r) <= ALIGNMENT_RADIUS) {
-			vecSum.first += r.move.first;
-			vecSum.second += r.move.second;
-		}
+		vecSum.first += r.move.first;
+		vecSum.second += r.move.second;
 	}
-	//for (auto& r : nearbyRobots) {
-	//	if (r.pos == robot.pos) continue;
-	//	vecSum.first += r.move.first;
-	//	vecSum.second += r.move.second;
-	//}
 
 	vecSum = MakeUnitVector(vecSum);
 	return vecSum;
@@ -194,18 +183,27 @@ MovementVec Alignment(const Robot& robot, const std::vector<Robot>& robots) {
 //団結のこと
 MovementVec Cohesion(const Robot& robot, const std::vector<Robot>& robots) {
 	MovementVec vecSum = std::make_pair<double, double>(0, 0);
-	int detectedRobotCount = 0;
+	std::vector<Robot> nearbyRobots;
 
-	for (const auto& r : robots) {
-		if (CalcRobotDistance(robot, r) <= ALIGNMENT_RADIUS) {
-			vecSum.first += r.move.first;
-			vecSum.second += r.move.second;
-			++detectedRobotCount;
-		}
+	GetNearbyRobots(nearbyRobots, robot, robots, COHESION_RADIUS);
+
+	if (!nearbyRobots.size()) {
+		return { 0, 0 };
 	}
-	
-	vecSum.first /= detectedRobotCount;
-	vecSum.second /= detectedRobotCount;
+
+	for (const auto& r : nearbyRobots) {
+		vecSum.first += r.pos.first;
+		vecSum.second += r.pos.second;
+	}
+
+	//重心の位置ベクトル
+	vecSum.first /= nearbyRobots.size();
+	vecSum.second /= nearbyRobots.size();
+
+	//重心へのベクトルを計算
+	vecSum.first -= robot.pos.first;
+	vecSum.second -= robot.pos.second;
+
 
 	vecSum = MakeUnitVector(vecSum);
 	return vecSum;
@@ -266,7 +264,7 @@ void Main(){
 
 			//視野表示判定
 			if (eyesightVisualization) {
-				graph.Draw(Circle(robotx, roboty, 3.5), ColorF(0, 0, 1, 0.2));
+				graph.Draw(Circle(robotx, roboty, DETECTION_RADIUS), ColorF(0, 0, 1, 0.2));
 			}
 		}
 		if (SimpleGUI::Button(U"reset", Vec2(250, 550))) {
