@@ -29,10 +29,10 @@ constexpr double ALIGNMENT_RADIUS = 7;
 constexpr double COHESION_RADIUS = 7;
 
 //各相互作用ルールの重み
-constexpr double PREVIOUS_MOVE_VEC_WEIGHT = 0.5;
-constexpr double SEPARATION_WEIGHT = 0.1;
-constexpr double ALIGNMENT_WEIGHT = 0.3;
-constexpr double COHESION_WEIGHT = 0.1;
+double PREVIOUS_MOVE_VEC_WEIGHT = 0.5;
+double SEPARATION_WEIGHT = 0.1;
+double ALIGNMENT_WEIGHT = 0.3;
+double COHESION_WEIGHT = 0.1;
 
 
 //デフォルト移動ベクトルの種類
@@ -225,6 +225,14 @@ void MoveRobots(std::vector<Robot>& robots) {
 	}
 }
 
+void SettingWindow() {
+	constexpr int TES_COUNT = 4;
+	static std::vector<TextEditState> teses(TES_COUNT);
+	for (int i = 0; i < TES_COUNT; ++i) {
+		SimpleGUI::TextBox(teses[i], Vec2(10, 20 + i * 20), 50);
+	}
+}
+
 void Main(){
 	Window::Resize(Size(1700, 1000));
 	Scene::SetBackground(Palette::White);
@@ -243,11 +251,43 @@ void Main(){
 	bool isFirstTime = true;
 	bool autoMode = false;
 	bool eyesightVisualization = false;
+	bool settingMode = false;
+
+	//texteditstate
+	constexpr int TES_COUNT = 4;
+	std::vector<TextEditState> teses(TES_COUNT);
+	const std::vector<String> SETTING_OPTION_NAME{
+		U"前回の移動ベクトルの重み: ",
+		U"整列の重み",
+		U"団結の重み",
+		U"分離の重み"
+	};
 
 	//メインループ
 	while (System::Update())
 	{
 		//ロボット制御プログラムへ移行する時はここから気にしなくてよい------------------------------
+		//setting画面
+		if (settingMode) {
+			if (SimpleGUI::Button(U"閉じる", Vec2(10, 550))) {
+				try {
+					PREVIOUS_MOVE_VEC_WEIGHT = Parse<double>(teses[0].text);
+					ALIGNMENT_WEIGHT = Parse<double>(teses[1].text);
+					COHESION_WEIGHT = Parse<double>(teses[2].text);
+					SEPARATION_WEIGHT = Parse<double>(teses[3].text);
+					settingMode = false;
+				}
+				catch (const ParseError& e) {
+				}
+				continue;
+			}
+			for (int i = 0; i < TES_COUNT; ++i) {
+				SimpleGUI::TextBox(teses[i], Vec2(10, 20 + i * 50), 50);
+				font(SETTING_OPTION_NAME[i]).draw(70, 20 + i * 50 + 5, Palette::Black);
+			}
+			continue;
+		}
+
 		//グラフの表示
 		graph.Show();
 
@@ -277,6 +317,13 @@ void Main(){
 			if (eyesightVisualization) {
 				graph.Draw(Circle(robotx, roboty, DETECTION_RADIUS), ColorF(0, 0, 1, 0.2));
 			}
+		}
+		if (SimpleGUI::Button(U"Setting", Vec2(600, 550))) {
+			teses[0].text = Format(PREVIOUS_MOVE_VEC_WEIGHT);
+			teses[1].text = Format(ALIGNMENT_WEIGHT);
+			teses[2].text = Format(COHESION_WEIGHT);
+			teses[3].text = Format(SEPARATION_WEIGHT);
+			settingMode = true;
 		}
 		if (SimpleGUI::Button(U"reset", Vec2(250, 550))) {
 			isFirstTime = true;
