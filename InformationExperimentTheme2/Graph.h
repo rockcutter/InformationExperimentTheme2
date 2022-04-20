@@ -1,11 +1,11 @@
 ﻿#pragma once
 #include <Siv3D.hpp>
 #include <vector>
-
+#include "MyVec.h"
 
 //エイリアス
-using Position = std::pair<double, double>;
-using MovementVec = std::pair<double, double>;
+using Position = MyVec<double>;
+using MovementVec = MyVec<double>;
 
 class Graph {
 private:
