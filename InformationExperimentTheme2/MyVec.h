@@ -22,18 +22,5 @@ public:
 		if (!obj2.first || !obj2.second) throw std::domain_error("0除算");
 		return MyVec<T>(obj1.first / obj2.first, obj1.second / obj2.second);
 	}
-	MyVec<T> operator+=(const MyVec<T>& obj) {
-		return *this + obj;
-	}
-	MyVec<T> operator-=(const MyVec<T>& obj) {
-		return *this - obj;
-	}
-	MyVec<T> operator*=(const MyVec<T>& obj) {
-		return *this * obj;
-	}
-	MyVec<T> operator/=(const MyVec<T>& obj) {
-		return *this / obj;
-	}
-
 };
 
