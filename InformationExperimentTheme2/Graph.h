@@ -3,6 +3,7 @@
 #include <vector>
 #include "MyVec.h"
 
+
 //エイリアス
 using Position = MyVec<double>;
 using MovementVec = MyVec<double>;
