@@ -6,6 +6,10 @@
 #include "MyVec.h"
 #include "Graph.h"
 
+//エイリアス
+using Position = MyVec<double>;
+using MovementVec = MyVec<double>;
+
 //基本パラメータ
 constexpr int ROBOT_COUNT = 10; // ロボット数
 constexpr double ROBOT_RADIUS = 1.5; //ロボットの直径は3cm
@@ -13,6 +17,8 @@ constexpr double ROBOT_RADIUS = 1.5; //ロボットの直径は3cm
 //グラフパラメータ
 constexpr int CMPIXEL = 15;//1cmを何pixelで描画するか
 constexpr int GRAPH_SIZE = 100;
+constexpr int GRAPH_X = 10;
+constexpr int GRAPH_Y = 500;
 
 //ロボットの検知範囲
 constexpr double DETECTION_RADIUS = 7;
@@ -28,16 +34,13 @@ constexpr double SEPARATION_WEIGHT = 0.1;
 constexpr double ALIGNMENT_WEIGHT = 0.3;
 constexpr double COHESION_WEIGHT = 0.1;
 
-//エイリアス
-using Position = MyVec<double>;
-using MovementVec = MyVec<double>;
 
 //デフォルト移動ベクトルの種類
 const MovementVec DEFAULT_VEC_UP{0, 1};
 const MovementVec DEFAULT_VEC_RIGHT{1 / std::sqrt(2), 1 / std::sqrt(2)};
 const MovementVec DEFAULT_VEC_LEFT{-1 / std::sqrt(2), 1 / std::sqrt(2)};
 
-const Position INITIAL_POSITION_DELTA{ 1, 1 }; //初期位置をずらしたいときに使う
+const Position INITIAL_POSITION_DELTA{ 0, 0 }; //初期位置をずらしたいときに使う
 
 //通常のグラフのような座標管理なのでウィンドウにおける座標の管理ではない
 const std::array<Position, ROBOT_COUNT> INITIAL_POS{ // ロボットの初期位置
@@ -234,7 +237,7 @@ void Main(){
 	InitIdentifiler(robots);
 
 	//グラフ構築
-	Graph graph(Position{10, 800}, CMPIXEL, GRAPH_SIZE);
+	Graph graph(Position{GRAPH_X, GRAPH_Y}, CMPIXEL, GRAPH_SIZE);
 
 	//各種フラグ
 	bool isFirstTime = true;
