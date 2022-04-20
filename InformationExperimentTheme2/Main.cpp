@@ -266,6 +266,7 @@ void Main(){
 	//メインループ
 	while (System::Update())
 	{
+		//描写等の処理
 		//ロボット制御プログラムへ移行する時はここから気にしなくてよい------------------------------
 		//setting画面
 		if (settingMode) {
@@ -304,13 +305,15 @@ void Main(){
 			//情報の表示
 			Position robotMouseOverCirclePos = graph.ConvertPos(robot.pos);
 			if (Circle(robotMouseOverCirclePos.first, robotMouseOverCirclePos.second, 20).mouseOver()) {
+				Point cursorPos = Cursor::Pos();
+				Rect(cursorPos.x + 30, cursorPos.y - 20, 220, 180).draw(Palette::White);
 				font(robot.identifier,U"\n",
 					U"Movement X: ", robot.move.first, U"\n",
 					U"Movement Y: ", robot.move.second,U"\n",
 					U"Movement norm: ", CalcVecNorm(robot.move), U"\n",
 					U"Position X: ", robot.pos.first, U"\n"
 					U"Position Y: ", robot.pos.second
-					).draw(Cursor::Pos().x + 30, Cursor::Pos().y - 20, Palette::Darkblue);
+					).draw(cursorPos.x + 30, cursorPos.y - 20, Palette::Darkblue);
 			}
 
 			//視野表示判定
@@ -318,14 +321,14 @@ void Main(){
 				graph.Draw(Circle(robotx, roboty, DETECTION_RADIUS), ColorF(0, 0, 1, 0.2));
 			}
 		}
-		if (SimpleGUI::Button(U"Setting", Vec2(600, 550))) {
+		if (SimpleGUI::Button(U"Setting", Vec2(450, 550))) {
 			teses[0].text = Format(PREVIOUS_MOVE_VEC_WEIGHT);
 			teses[1].text = Format(ALIGNMENT_WEIGHT);
 			teses[2].text = Format(COHESION_WEIGHT);
 			teses[3].text = Format(SEPARATION_WEIGHT);
 			settingMode = true;
 		}
-		if (SimpleGUI::Button(U"reset", Vec2(250, 550))) {
+		if (SimpleGUI::Button(U"reset", Vec2(230, 550))) {
 			isFirstTime = true;
 			InitRobotMoveVec(robots);
 			InitRobotPos(robots);
@@ -334,7 +337,7 @@ void Main(){
 			if (eyesightVisualization) eyesightVisualization = false;
 			else eyesightVisualization = true;
 		}
-		if (SimpleGUI::Button(U"auto", Vec2(400, 550))) {
+		if (SimpleGUI::Button(U"auto", Vec2(340, 550))) {
 			if (autoMode) autoMode = false;
 			else autoMode = true;
 		}
@@ -343,6 +346,7 @@ void Main(){
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		//ロボット制御プログラムへ移行する時はここまで気にしなくてよい---------------------------------------
+		//描写等の処理ここまで
 
 
 		
