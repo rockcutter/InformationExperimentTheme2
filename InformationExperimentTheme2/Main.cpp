@@ -141,10 +141,9 @@ Line VecToLine(const MovementVec& vec) {
 	return Line(vec.first, vec.second, std::atan(vec.first / vec.second), 1);
 }
 
-//radiusを半径とする円内のRobotオブジェクトをarrに格納
+//radiusを半径とする円内のRobotオブジェクトをarrに格納(自分含む)
 void GetNearbyRobots(std::vector<Robot>& arr, const Robot& robot, const std::vector<Robot>& robots, double radius) {
 	for (const auto& r : robots) {
-		if (r.pos == robot.pos) continue;
 		if (CalcRobotDistance(robot, r) <= radius) {
 			arr.push_back(r);
 		}
@@ -156,14 +155,17 @@ MovementVec Separation(const Robot& robot, const std::vector<Robot>& robots) {
 	MovementVec vecSum = std::make_pair<double, double>(0, 0);//加算用のベクトル
 	std::vector<Robot> nearbyRobots;
 
+	//一定範囲内の近くのロボットを探索(自分含む)
 	GetNearbyRobots(nearbyRobots, robot, robots, SEPARATION_RADIUS);
+
+	//範囲内のロボット(自分以外)に対する自分からのベクトルを求めてvecSumに加算しておく
 	for (auto& r : nearbyRobots) {
 		if (r.pos == robot.pos) continue;
 		vecSum = vecSum + r.pos - robot.pos;
 	}
-
+	
 	vecSum = MakeUnitVector(vecSum);
-	vecSum = vecSum * MovementVec{ -1, -1 };
+	vecSum = vecSum * MovementVec{ -1, -1 }; //自分から近くのロボットへのベクトルを加算した結果を反転している
 	return vecSum;
 }
 
@@ -172,7 +174,9 @@ MovementVec Alignment(const Robot& robot, const std::vector<Robot>& robots) {
 	MovementVec vecSum = std::make_pair<double, double>(0, 0);
 	std::vector<Robot> nearbyRobots;
 
+	//一定範囲内のロボットを探索(自分含む)
 	GetNearbyRobots(nearbyRobots, robot, robots, ALIGNMENT_RADIUS);
+	//自分を除く一定範囲内のロボットの移動ベクトルをすべて加算
 	for (auto& r : nearbyRobots) {
 		if (r.pos == robot.pos) continue;
 		vecSum = vecSum + r.move;
@@ -187,17 +191,20 @@ MovementVec Cohesion(const Robot& robot, const std::vector<Robot>& robots) {
 	MovementVec vecSum = std::make_pair<double, double>(0, 0);
 	std::vector<Robot> nearbyRobots;
 
+	//一定範囲内の以下略
 	GetNearbyRobots(nearbyRobots, robot, robots, COHESION_RADIUS);
 
+	//近くにロボットが無ければ0を返す
 	if (!nearbyRobots.size()) {
-		return { 0, 0 };
+		return {0, 0};
 	}
 
+	//近くのロボット(自分含む)の位置座標をvecSumに加算しておく
 	for (const auto& r : nearbyRobots) {
 		vecSum = vecSum + r.pos;
 	}
 
-	//重心の位置ベクトル
+	//重心の位置ベクトルをもとめる
 	vecSum.first /= nearbyRobots.size();
 	vecSum.second /= nearbyRobots.size();
 
@@ -257,6 +264,7 @@ void Main(){
 				font(robot.identifier,U"\n",
 					U"Movement X: ", robot.move.first, U"\n",
 					U"Movement Y: ", robot.move.second,U"\n",
+					U"Movement norm: ", CalcVecNorm(robot.move), U"\n",
 					U"Position X: ", robot.pos.first, U"\n"
 					U"Position Y: ", robot.pos.second
 					).draw(Cursor::Pos().x + 30, Cursor::Pos().y - 20, Palette::Darkblue);
@@ -323,18 +331,10 @@ void Main(){
 				throw std::logic_error("ベクトルの大きさが1よりデカいぞ(1cm以上進む気だぞ)");
 			}
 			
-			Robot tempRobot;
-			tempRobot.identifier = robot.identifier;
-			tempRobot.pos = robot.pos;
-			tempRobot.move = moveVec;
-			//movedRobots.push_back(Robot(robot.identifier, robot.pos, robot.move));
-			movedRobots.push_back(tempRobot);
-
-			double robotx = robot.pos.first;
-			double roboty = robot.pos.second;
-			graph.Draw(Line(robotx, roboty, robotx + robot.move.first, roboty + robot.move.second), Palette::Red);
+			movedRobots.emplace_back(Robot(robot.identifier, robot.pos, moveVec));
 		}
 
+		//robotsを更新
 		robots = movedRobots;
 		MoveRobots(robots);
 	}
