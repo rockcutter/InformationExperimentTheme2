@@ -236,6 +236,8 @@ void SettingWindow() {
 void Main(){
 	Window::Resize(Size(1700, 1000));
 	Scene::SetBackground(Palette::White);
+	Graphics::SetVSyncEnabled(false);
+
 	Font font(20);
 
 	//ロボット初期化
@@ -253,6 +255,8 @@ void Main(){
 	bool eyesightVisualization = false;
 	bool settingMode = false;
 
+	int loopCount = 0;
+
 	//texteditstate
 	constexpr int TES_COUNT = 4;
 	std::vector<TextEditState> teses(TES_COUNT);
@@ -268,6 +272,7 @@ void Main(){
 	{
 		//描写等の処理
 		//ロボット制御プログラムへ移行する時はここから気にしなくてよい------------------------------
+		font(loopCount).draw(600, 550, Palette::Black);
 		//setting画面
 		if (settingMode) {
 			if (SimpleGUI::Button(U"閉じる", Vec2(10, 550))) {
@@ -330,6 +335,7 @@ void Main(){
 		}
 		if (SimpleGUI::Button(U"reset", Vec2(230, 550))) {
 			isFirstTime = true;
+			loopCount = 0;
 			InitRobotMoveVec(robots);
 			InitRobotPos(robots);
 		}
@@ -344,6 +350,7 @@ void Main(){
 		if (!(SimpleGUI::Button(U"next", Vec2(10, 550)) || autoMode)) {
 			continue;
 		}
+		++loopCount;
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		//ロボット制御プログラムへ移行する時はここまで気にしなくてよい---------------------------------------
 		//描写等の処理ここまで
