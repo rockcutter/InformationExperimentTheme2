@@ -236,7 +236,6 @@ void SettingWindow() {
 void Main(){
 	Window::Resize(Size(1700, 1000));
 	Scene::SetBackground(Palette::White);
-	Graphics::SetVSyncEnabled(false);
 
 	Font font(20);
 
