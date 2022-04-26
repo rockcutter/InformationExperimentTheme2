@@ -139,11 +139,6 @@ MovementVec MakeUnitVector(const MovementVec& vec) {
 	return { vec.first / norm, vec.second / norm };
 }
 
-//ベクトルを線分に変換
-Line VecToLine(const MovementVec& vec) {
-	return Line(vec.first, vec.second, std::atan(vec.first / vec.second), 1);
-}
-
 //radiusを半径とする円内のRobotオブジェクトをarrに格納(自分含む)
 void GetNearbyRobots(std::vector<Robot>& arr, const Robot& robot, const std::vector<Robot>& robots, double radius) {
 	for (const auto& r : robots) {
@@ -225,14 +220,6 @@ void MoveRobots(std::vector<Robot>& robots) {
 	}
 }
 
-void SettingWindow() {
-	constexpr int TES_COUNT = 4;
-	static std::vector<TextEditState> teses(TES_COUNT);
-	for (int i = 0; i < TES_COUNT; ++i) {
-		SimpleGUI::TextBox(teses[i], Vec2(10, 20 + i * 20), 50);
-	}
-}
-
 void Main(){
 	Window::Resize(Size(1700, 1000));
 	Scene::SetBackground(Palette::White);
@@ -276,13 +263,13 @@ void Main(){
 		if (settingMode) {
 			if (SimpleGUI::Button(U"閉じる", Vec2(10, 550))) {
 				try {
-					PREVIOUS_MOVE_VEC_WEIGHT = Parse<double>(teses[0].text);
-					ALIGNMENT_WEIGHT = Parse<double>(teses[1].text);
-					COHESION_WEIGHT = Parse<double>(teses[2].text);
-					SEPARATION_WEIGHT = Parse<double>(teses[3].text);
+					PREVIOUS_MOVE_VEC_WEIGHT	= Parse<double>(teses[0].text);
+					ALIGNMENT_WEIGHT			= Parse<double>(teses[1].text);
+					COHESION_WEIGHT				= Parse<double>(teses[2].text);
+					SEPARATION_WEIGHT			= Parse<double>(teses[3].text);
 					settingMode = false;
 				}
-				catch (const ParseError& e) {
+				catch (const ParseError&) {
 				}
 				continue;
 			}
@@ -323,6 +310,7 @@ void Main(){
 			//視野表示判定
 			if (eyesightVisualization) {
 				graph.Draw(Circle(robotx, roboty, DETECTION_RADIUS), ColorF(0, 0, 1, 0.2));
+				graph.Draw(Circle(robotx, roboty, SEPARATION_RADIUS), ColorF(0, 1, 0, 0.2));
 			}
 		}
 		if (SimpleGUI::Button(U"Setting", Vec2(450, 550))) {
