@@ -3,6 +3,7 @@
 #include <array>
 #include <stdexcept>
 #include <cmath>
+#include <random>
 #include "MyVec.h"
 #include "Graph.h"
 
@@ -15,8 +16,8 @@ constexpr int ROBOT_COUNT = 10; // ロボット数
 constexpr double ROBOT_RADIUS = 1.5; //ロボットの直径は3cm
 
 //グラフパラメータ
-constexpr int CMPIXEL = 15;//1cmを何pixelで描画するか
-constexpr int GRAPH_SIZE = 100;
+constexpr int CMPIXEL = 1;//1cmを何pixelで描画するか
+constexpr int GRAPH_SIZE = 1000;
 constexpr int GRAPH_X = 10;
 constexpr int GRAPH_Y = 500;
 
@@ -30,8 +31,8 @@ constexpr double COHESION_RADIUS = 7;
 
 //各相互作用ルールの重み
 double PREVIOUS_MOVE_VEC_WEIGHT = 0.5;
-double SEPARATION_WEIGHT = 0.1;
-double ALIGNMENT_WEIGHT = 0.3;
+double SEPARATION_WEIGHT = 0.15;
+double ALIGNMENT_WEIGHT = 0.25;
 double COHESION_WEIGHT = 0.1;
 
 
@@ -40,7 +41,7 @@ const MovementVec DEFAULT_VEC_UP{0, 1};
 const MovementVec DEFAULT_VEC_RIGHT{1 / std::sqrt(2), 1 / std::sqrt(2)};
 const MovementVec DEFAULT_VEC_LEFT{-1 / std::sqrt(2), 1 / std::sqrt(2)};
 
-const Position INITIAL_POSITION_DELTA{ 0, 0 }; //初期位置をずらしたいときに使う
+const Position INITIAL_POSITION_DELTA{ 500, 0 }; //初期位置をずらしたいときに使う
 
 //通常のグラフのような座標管理なのでウィンドウにおける座標の管理ではない
 const std::array<Position, ROBOT_COUNT> INITIAL_POS{ // ロボットの初期位置
@@ -86,6 +87,7 @@ public:
 	char identifier;
 	Position pos;
 	MovementVec move;
+	bool prevRotated = false;
 	Robot():identifier(0), pos{0, 0}, move{0, 0}
 	{}
 	Robot(char identifier, Position pos, MovementVec move) 
@@ -146,6 +148,13 @@ void GetNearbyRobots(std::vector<Robot>& arr, const Robot& robot, const std::vec
 			arr.push_back(r);
 		}
 	}
+}
+
+MovementVec RotateVector(const MovementVec& vec, double rad) {
+	return {
+		vec.second * std::sin(rad) + vec.first * std::cos(rad),
+		vec.first * std::sin(rad) + vec.second * std::cos(rad)
+	};
 }
 
 //分離のこと あるロボットとその他すべてのロボットを比較してベクトルを計算
@@ -338,7 +347,7 @@ void Main(){
 			continue;
 		}
 		++loopCount;
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		//ロボット制御プログラムへ移行する時はここまで気にしなくてよい---------------------------------------
 		//描写等の処理ここまで
 
@@ -374,12 +383,34 @@ void Main(){
 			moveVec.first += COHESION_WEIGHT * tempVec.first;
 			moveVec.second += COHESION_WEIGHT * tempVec.second;
 
+			std::random_device rnd;
+			std::mt19937 mt(rnd());
+			std::uniform_int_distribution<> dist(0, 99);
 
+			//ここで確率的に回転を行う
+			//2連続回転はしないようにする
+			bool rotatedFlag = robot.prevRotated;
+
+			//10%の確率で回転
+			if (dist(mt) < 10 && rotatedFlag == false) {
+				//50%の確率でpi/4回転
+				if (dist(mt) < 50) {
+					moveVec = RotateVector(moveVec, 3.14159265 / 4);
+				}
+				else {//50%の確率で-pi/4回転
+					moveVec = RotateVector(moveVec, -3.14159265/ 4);
+				}
+				rotatedFlag = true;
+			}//フラグを折る
+			else if (rotatedFlag == true) {
+				rotatedFlag = false;
+			}
 			if (CalcVecNorm(moveVec) > 1) {
-				throw std::logic_error("ベクトルの大きさが1よりデカいぞ(1cm以上進む気だぞ)");
+				//throw std::logic_error("ベクトルの大きさが1よりデカいぞ(1cm以上進む気だぞ)");
 			}
 			
 			movedRobots.emplace_back(Robot(robot.identifier, robot.pos, moveVec));
+			movedRobots.at(movedRobots.size() - 1).prevRotated = rotatedFlag;
 		}
 
 		//robotsを更新
